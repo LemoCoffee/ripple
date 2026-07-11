@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import GraphView from './GraphView.jsx'
+import Search from './Search.jsx'
 
 async function FetchMap(mapName, authToken) {
   const url = '/api/note/view?map=' + encodeURIComponent(mapName)
@@ -61,12 +62,10 @@ function App() {
     <div className="app">
       <GraphView nodes={mapEchoes} markRead={markRead} />
       <div className="input-panel">
-        <input
-          type="text"
-          value={mapInput}
-          onChange={(event) => setMapInput(event.target.value)}
-          placeholder="Enter map name"
-        />
+        <Search onSelect={(selectedMapName) => {
+          setMapInput(selectedMapName)
+          setSelectedMap(selectedMapName)
+        }} />
       </div>
     </div>
   )
