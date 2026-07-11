@@ -29,6 +29,18 @@ function App() {
   const [mapInput, setMapInput] = useState(selectedMap)
   const [mapEchoes, setMapEchoes] = useState([])
 
+  const [readNoteIds, setReadNoteIds] = useState(() => {
+    return JSON.parse(localStorage.getItem('readNoteIds') || '[]')
+  })
+
+  const markRead = (noteId) => {
+    setReadNoteIds((prev) => {
+      const next = [...new Set([...prev, noteId])]
+      localStorage.setItem('readNoteIds', JSON.stringify(next))
+      return next
+    })
+  }
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const loadMap = async () => {
@@ -47,7 +59,7 @@ function App() {
 
   return (
     <div className="app">
-      <GraphView nodes={mapEchoes} />
+      <GraphView nodes={mapEchoes} markRead={markRead} />
       <div className="input-panel">
         <input
           type="text"

@@ -16,78 +16,92 @@ function setGraphNodes(graph, nodes) {
       x: position[0] ?? 0,
       y: position[1] ?? 0,
       size: 2,
-      color: isOffensive(node.comment) ? 'red' : 'PaleTurquoise',
+      color: getNodeColor(node),
     })
   })
 }
 
-function GraphView({ nodes }) {
+function getNodeColor(node) {
+  if (node.read) {
+    return 'gray'
+  }
+
+  if (isOffensive(node.comment)) {
+    return 'red'
+  }
+
+  return 'PaleTurquoise'
+}
+
+function GraphView({ nodes, markRead }) {
   const containerRef = useRef(null)
+  const graphRef = useRef(null)
+  const rendererRef = useRef(null)
 
   useEffect(() => {
-    if (!containerRef.current) return
+    graphRef.current = new Graph()
 
-    const graph = new Graph()
-
-    if (!Array.isArray(nodes) || nodes.length === 0) {
-      graph.addNode('seed', {
-        label: 'No echoes yet',
-        x: 0,
-        y: 0,
-        size: 1,
-        color: '#7dd3fc',
-      })
-    } else {
-      setGraphNodes(graph, nodes)
-    }
-
-    const renderer = new Sigma(graph, containerRef.current, {
+    const sigmaOptions = {
       renderEdgeLabels: false,
       renderLabels: false,
-      nodeLabelRenderer: (node, data, context, settings) => {
-        const label = data.label || ''
-        const maxWidth = 140
-        const words = label.split(/(\s+)/).filter(Boolean)
-        const lines = []
-        let currentLine = ''
-
-        context.fillStyle = settings.labelColor === 'node' ? data.color : settings.defaultLabelColor
-        context.font = `${settings.labelWeight} ${data.size}px ${settings.labelFont}`
-
-        words.forEach((word) => {
-          const candidate = currentLine ? `${currentLine}${word}` : word
-          const metrics = context.measureText(candidate)
-
-          if (metrics.width <= maxWidth || currentLine === '') {
-            currentLine = candidate
-          } else {
-            lines.push(currentLine)
-            currentLine = word
-          }
-        })
-
-        if (currentLine) {
-          lines.push(currentLine)
-        }
-
-        const lineHeight = data.size + 2
-        lines.forEach((line, index) => {
-          context.fillText(
-            line,
-            data.x + data.size + 3,
-            data.y + lineHeight * index - ((lines.length - 1) * lineHeight) / 2,
-          )
-        })
-      },
       labelRenderedSizeThreshold: 0,
       defaultNodeType: 'circle',
       defaultEdgeType: 'line',
       minCameraRatio: 0.1,
       maxCameraRatio: 4,
+    }
+
+    rendererRef.current = new Sigma(
+      graphRef.current,
+      containerRef.current,
+      sigmaOptions
+    )
+
+    return () => {
+      rendererRef.current?.kill()
+    }
+  }, [])
+
+  useEffect(() => {
+    const graph = graphRef.current
+    if (!graph) return
+
+    graph.clear()
+
+    if (!Array.isArray(nodes) || nodes.length === 0) {
+      graph.addNode("seed", {
+        label: "No echoes yet",
+        x: 0,
+        y: 0,
+        size: 1,
+        color: "#7dd3fc",
+      })
+    } else {
+      setGraphNodes(graph, nodes)
+    }
+
+    rendererRef.current.refresh()
+  }, [nodes])
+  
+  useEffect(() => {
+    const renderer = rendererRef.current
+    const graph = graphRef.current
+    if (!renderer) return
+
+    renderer.on('enterNode', ({node}) => {
+      graph.setNodeAttribute(node, "enterHover", performance.now())
     })
 
-    return () => renderer.kill()
-  }, [nodes])
+    renderer.on('leaveNode', ({node}) => {
+      const leaveHover = performance.now()
+      if (leaveHover - graph.getNodeAttribute(node, "enterHover") >= 200 && markRead) {
+        markRead(node)
+        graph.setNodeAttribute(node, "read", true)
+        graph.setNodeAttribute(node, "color", "gray")
+        renderer.refresh()
+      }
+    })
+  }, [markRead])
 
   return <div className="graph-layer" ref={containerRef} />
 }
