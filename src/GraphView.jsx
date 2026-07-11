@@ -26,20 +26,30 @@ function getNodeColor(node) {
     return 'gray'
   }
 
-  if (isOffensive(node)) {
+  if (isOffensive(node.comment)) {
     return 'red'
   }
 
   return 'PaleTurquoise'
 }
 
-function GraphView({ nodes }) {
+function GraphView({ nodes, markRead }) {
   const containerRef = useRef(null)
   const graphRef = useRef(null)
   const rendererRef = useRef(null)
 
   useEffect(() => {
     graphRef.current = new Graph()
+
+    const sigmaOptions = {
+      renderEdgeLabels: false,
+      renderLabels: false,
+      labelRenderedSizeThreshold: 0,
+      defaultNodeType: 'circle',
+      defaultEdgeType: 'line',
+      minCameraRatio: 0.1,
+      maxCameraRatio: 4,
+    }
 
     rendererRef.current = new Sigma(
       graphRef.current,
@@ -73,6 +83,26 @@ function GraphView({ nodes }) {
     rendererRef.current.refresh()
   }, [nodes])
   
+  useEffect(() => {
+    const renderer = rendererRef.current
+    const graph = graphRef.current
+    if (!renderer) return
+
+    renderer.on('enterNode', ({node}) => {
+      graph.setNodeAttribute(node, "enterHover", performance.now())
+    })
+
+    renderer.on('leaveNode', ({node}) => {
+      const leaveHover = performance.now()
+      if (leaveHover - graph.getNodeAttribute(node, "enterHover") >= 200 && markRead) {
+        markRead(node)
+        graph.setNodeAttribute(node, "read", true)
+        graph.setNodeAttribute(node, "color", "gray")
+        renderer.refresh()
+      }
+    })
+  }, [markRead])
+
   return <div className="graph-layer" ref={containerRef} />
 }
 

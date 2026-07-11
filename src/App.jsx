@@ -59,7 +59,7 @@ function App() {
 
   return (
     <div className="app">
-      <GraphView nodes={mapEchoes} />
+      <GraphView nodes={mapEchoes} markRead={markRead} />
       <div className="input-panel">
         <input
           type="text"
