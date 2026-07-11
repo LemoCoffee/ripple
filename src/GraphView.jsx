@@ -86,21 +86,31 @@ function GraphView({ nodes, markRead }) {
   useEffect(() => {
     const renderer = rendererRef.current
     const graph = graphRef.current
-    if (!renderer) return
+    if (!renderer || !graph) return
 
-    renderer.on('enterNode', ({node}) => {
-      graph.setNodeAttribute(node, "enterHover", performance.now())
-    })
+    const handleEnterNode = ({ node }) => {
+      graph.setNodeAttribute(node, 'enterHover', performance.now())
+    }
 
-    renderer.on('leaveNode', ({node}) => {
+    const handleLeaveNode = ({ node }) => {
       const leaveHover = performance.now()
-      if (leaveHover - graph.getNodeAttribute(node, "enterHover") >= 200 && markRead) {
+      const enteredAt = graph.getNodeAttribute(node, 'enterHover') || 0
+
+      if (leaveHover - enteredAt >= 200 && markRead) {
         markRead(node)
-        graph.setNodeAttribute(node, "read", true)
-        graph.setNodeAttribute(node, "color", "gray")
+        graph.setNodeAttribute(node, 'read', true)
+        graph.setNodeAttribute(node, 'color', 'gray')
         renderer.refresh()
       }
-    })
+    }
+
+    renderer.on('enterNode', handleEnterNode)
+    renderer.on('leaveNode', handleLeaveNode)
+
+    return () => {
+      renderer.off('enterNode', handleEnterNode)
+      renderer.off('leaveNode', handleLeaveNode)
+    }
   }, [markRead])
 
   return <div className="graph-layer" ref={containerRef} />
