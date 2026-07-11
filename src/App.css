@@ -26,10 +26,12 @@
 .search-container {
   position: relative;
   width: min(420px, calc(100% - 2rem));
+  box-sizing: border-box;
 }
 
 .search-container input {
   width: 100%;
+  box-sizing: border-box;
   padding: 0.85rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;

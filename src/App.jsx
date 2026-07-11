@@ -30,6 +30,14 @@ function App() {
   const [mapInput, setMapInput] = useState(selectedMap)
   const [mapEchoes, setMapEchoes] = useState([])
 
+  const loadMap = async (mapName) => {
+    if (!mapName) { return }
+
+    const echoes = await FetchMap(mapName, authToken)
+    setMapEchoes(echoes)
+    setSelectedMap(mapName)
+  }
+
   const [readNoteIds, setReadNoteIds] = useState(() => {
     return JSON.parse(localStorage.getItem('readNoteIds') || '[]')
   })
@@ -44,15 +52,7 @@ function App() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const loadMap = async () => {
-        if (!mapInput) { return }
-        const echoes = await FetchMap(mapInput, authToken)
-        setMapEchoes(echoes)
-        setSelectedMap(mapInput)
-        console.log(echoes)
-      }
-
-      loadMap()
+      loadMap(mapInput)
     }, 1000)
 
     return () => window.clearTimeout(timer)
@@ -62,9 +62,13 @@ function App() {
     <div className="app">
       <GraphView nodes={mapEchoes} markRead={markRead} />
       <div className="input-panel">
-        <Search onSelect={(selectedMapName) => {
+        <Search onSelect={(selectedMapName, options = {}) => {
           setMapInput(selectedMapName)
           setSelectedMap(selectedMapName)
+
+          if (options.immediate) {
+            loadMap(selectedMapName)
+          }
         }} />
       </div>
     </div>

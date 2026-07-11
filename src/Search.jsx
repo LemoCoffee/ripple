@@ -51,7 +51,7 @@ function Search({ onSelect }) {
     if (event.key === 'Enter') {
       event.preventDefault()
       if (filteredMaps[0]) {
-        onSelect?.(filteredMaps[0].name)
+        onSelect?.(filteredMaps[0].name, { immediate: true })
         setQuery(filteredMaps[0].name)
         setIsOpen(false)
       }
@@ -84,7 +84,7 @@ function Search({ onSelect }) {
               type="button"
               onMouseDown={(event) => {
                 event.preventDefault()
-                onSelect?.(map.name)
+                onSelect?.(map.name, { immediate: true })
                 setQuery(map.name)
                 setIsOpen(false)
               }}
