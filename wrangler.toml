@@ -1,0 +1,3 @@
+name = "ripple"
+main = "./worker.js"
+compatibility_date = "2025-07-01"

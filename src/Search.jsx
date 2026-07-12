@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+const PROXY_BASE = '/api'
+
 function Search({ onSelect }) {
   const [query, setQuery] = useState('')
   const [maps, setMaps] = useState([])
@@ -9,7 +11,7 @@ function Search({ onSelect }) {
   useEffect(() => {
     const loadMaps = async () => {
       try {
-        const response = await fetch('/api/stats')
+        const response = await fetch(`${PROXY_BASE}/stats`)
         const data = await response.json()
         const mapEntries = Object.entries(data.maps || {})
           .map(([name, count]) => ({ name, count }))

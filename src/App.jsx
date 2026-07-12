@@ -3,8 +3,10 @@ import './App.css'
 import GraphView from './GraphView.jsx'
 import Search from './Search.jsx'
 
+const PROXY_BASE = '/api'
+
 async function FetchMap(mapName, authToken) {
-  const url = '/api/note/view?map=' + encodeURIComponent(mapName)
+  const url = `${PROXY_BASE}/note/view?map=${encodeURIComponent(mapName)}`
 
   console.log('Fetching map at : ' + url)
 
@@ -17,7 +19,8 @@ async function FetchMap(mapName, authToken) {
     })
 
     const text = await response.text()
-    return JSON.parse(text).notes
+    const data = text ? JSON.parse(text) : {}
+    return data?.notes ?? []
   } catch (error) {
     console.error(error)
     return []
