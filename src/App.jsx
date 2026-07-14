@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import GraphView from './GraphView.jsx'
 import Search from './Search.jsx'
+import Menu from './Menu.jsx'
 
 const PROXY_BASE = '/api'
 
@@ -32,6 +33,8 @@ function App() {
   const [selectedMap, setSelectedMap] = useState("ctf_applejack")
   const [mapInput, setMapInput] = useState(selectedMap)
   const [mapEchoes, setMapEchoes] = useState([])
+  const [activeMenu, setActiveMenu] = useState(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   const loadMap = async (mapName) => {
     if (!mapName) { return }
@@ -61,6 +64,17 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [mapInput, authToken])
 
+  const openMenu = (menuName) => {
+    setActiveMenu(menuName)
+    if (menuName === 'settings') setShowSettings(true)
+  }
+
+  const closeMenu = () => {
+    setActiveMenu(null)
+    setShowSettings(false)
+    setShowCredits(false)
+  }
+
   return (
     <div className="app">
       <GraphView nodes={mapEchoes} markRead={markRead} />
@@ -74,6 +88,23 @@ function App() {
           }
         }} />
       </div>
+
+      <div className="floating-menu-buttons">
+        <button type="button" className="floating-menu-button" onClick={() => openMenu('settings')}>
+          Settings
+        </button>
+      </div>
+
+      <Menu title="Settings" open={showSettings} onClose={closeMenu} mode="settings">
+        <div className="menu-row">
+          <span>Show explicit echoes</span>
+          <label className="toggle-row">
+            <input type="checkbox" defaultChecked />
+            <span className="toggle-slider" />
+          </label>
+        </div>
+      </Menu>
+
     </div>
   )
 }
