@@ -10,7 +10,7 @@ function setGraphNodes(graph, nodes, settings) {
 
   nodes.forEach((node) => {
     const position = Array.isArray(node?.position) ? node.position : []
-    const isOffensiveEcho = isOffensive(node.comment)
+    node.offensive = isOffensive(node.comment)
 
     graph.addNode(String(node.id), {
       label: node.comment || 'Echo',
@@ -18,7 +18,7 @@ function setGraphNodes(graph, nodes, settings) {
       y: position[1] ?? 0,
       size: 2,
       color: getNodeColor(node),
-      hidden: isOffensiveEcho && !settings?.showExplicitEchoes
+      hidden: node.offensive && !settings?.showExplicitEchoes
     })
   })
 }
@@ -28,7 +28,7 @@ function getNodeColor(node) {
     return 'gray'
   }
 
-  if (isOffensive(node.comment)) {
+  if (node.offensive) {
     return 'red'
   }
 
