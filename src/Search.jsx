@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 const PROXY_BASE = '/api'
+const DROPDOWN_COUNT = 32
 
 function Search({ onSelect }) {
   const [query, setQuery] = useState('')
   const [maps, setMaps] = useState([])
   const [isOpen, setIsOpen] = useState(false)
+  const [scrollCount, setScrollCount] = useState(1)
   const containerRef = useRef(null)
 
   useEffect(() => {
@@ -28,15 +30,12 @@ function Search({ onSelect }) {
 
   const filteredMaps = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
+    const source = normalizedQuery
+      ? maps.filter(({ name }) => name.toLowerCase().includes(normalizedQuery))
+      : maps
 
-    if (!normalizedQuery) {
-      return maps.slice(0, 8)
-    }
-
-    return maps
-      .filter(({ name }) => name.toLowerCase().includes(normalizedQuery))
-      .slice(0, 8)
-  }, [maps, query])
+    return source.slice(0, DROPDOWN_COUNT * scrollCount)
+  }, [maps, query, scrollCount])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -49,13 +48,32 @@ function Search({ onSelect }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const handleQueryChange = (value) => {
+    setQuery(value)
+    setScrollCount(1)
+    setIsOpen(true)
+  }
+
+  const handleSelect = (nextMapName) => {
+    onSelect?.(nextMapName, { immediate: true })
+    setQuery(nextMapName)
+    setScrollCount(1)
+    setIsOpen(false)
+  }
+
+  const handleScroll = (event) => {
+    const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
+
+    if (scrollTop + clientHeight >= scrollHeight - 24) {
+      setScrollCount((prev) => prev + 1)
+    }
+  }
+
   const handleKeyDown = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault()
       if (filteredMaps[0]) {
-        onSelect?.(filteredMaps[0].name, { immediate: true })
-        setQuery(filteredMaps[0].name)
-        setIsOpen(false)
+        handleSelect(filteredMaps[0].name)
       }
     }
   }
@@ -65,10 +83,7 @@ function Search({ onSelect }) {
       <input
         type="text"
         value={query}
-        onChange={(event) => {
-          setQuery(event.target.value)
-          setIsOpen(true)
-        }}
+        onChange={(event) => handleQueryChange(event.target.value)}
         onFocus={() => setIsOpen(true)}
         onKeyDown={handleKeyDown}
         placeholder="Enter map name"
@@ -77,7 +92,7 @@ function Search({ onSelect }) {
       {isOpen && filteredMaps.length > 0 && (
         <div
           className="search-dropdown"
-          onMouseLeave={() => setIsOpen(false)}
+          onScroll={handleScroll}
         >
           {filteredMaps.map((map) => (
             <button
@@ -86,9 +101,7 @@ function Search({ onSelect }) {
               type="button"
               onMouseDown={(event) => {
                 event.preventDefault()
-                onSelect?.(map.name, { immediate: true })
-                setQuery(map.name)
-                setIsOpen(false)
+                handleSelect(map.name)
               }}
             >
               <span>{map.name}</span>
