@@ -36,12 +36,16 @@ function App() {
   const [activeMenu, setActiveMenu] = useState(null)
   const [showCredits, setShowCredits] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [settings, setSettings] = useState({ showExplicitEchoes: true })
 
   const loadMap = async (mapName) => {
     if (!mapName) { return }
 
     const echoes = await FetchMap(mapName, authToken)
-    setMapEchoes(echoes)
+    const filteredEchoes = settings.showExplicitEchoes
+      ? echoes
+      : echoes.filter((echo) => !echo?.explicit)
+    setMapEchoes(filteredEchoes)
     setSelectedMap(mapName)
   }
 
@@ -63,7 +67,7 @@ function App() {
     }, 1000)
 
     return () => window.clearTimeout(timer)
-  }, [mapInput, authToken])
+  }, [mapInput, authToken, settings.showExplicitEchoes])
 
   const openMenu = (menuName) => {
     setActiveMenu(menuName)
@@ -79,7 +83,11 @@ function App() {
 
   return (
     <div className="app">
-      <GraphView nodes={mapEchoes} markRead={markRead} />
+      <GraphView
+        nodes={mapEchoes}
+        markRead={markRead}
+        settings={settings}
+      />
       <div className="input-panel">
         <Search onSelect={(selectedMapName, options = {}) => {
           setMapInput(selectedMapName)
@@ -104,7 +112,11 @@ function App() {
         <div className="menu-row">
           <span>Show explicit echoes</span>
           <label className="toggle-row">
-            <input type="checkbox" defaultChecked />
+            <input
+              type="checkbox"
+              checked={settings.showExplicitEchoes}
+              onChange={(event) => setSettings((prev) => ({ ...prev, showExplicitEchoes: event.target.checked }))}
+            />
             <span className="toggle-slider" />
           </label>
         </div>

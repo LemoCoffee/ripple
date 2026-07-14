@@ -3,13 +3,14 @@ import Graph from 'graphology'
 import Sigma from 'sigma'
 import { isOffensive } from './filter.js'
 
-function setGraphNodes(graph, nodes) {
+function setGraphNodes(graph, nodes, settings) {
   if (!graph || !Array.isArray(nodes)) {
     return
   }
 
   nodes.forEach((node) => {
     const position = Array.isArray(node?.position) ? node.position : []
+    const isOffensiveEcho = isOffensive(node.comment)
 
     graph.addNode(String(node.id), {
       label: node.comment || 'Echo',
@@ -17,6 +18,7 @@ function setGraphNodes(graph, nodes) {
       y: position[1] ?? 0,
       size: 2,
       color: getNodeColor(node),
+      hidden: isOffensiveEcho && !settings?.showExplicitEchoes
     })
   })
 }
@@ -33,7 +35,7 @@ function getNodeColor(node) {
   return 'PaleTurquoise'
 }
 
-function GraphView({ nodes, markRead }) {
+function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } }) {
   const containerRef = useRef(null)
   const graphRef = useRef(null)
   const rendererRef = useRef(null)
@@ -77,11 +79,11 @@ function GraphView({ nodes, markRead }) {
         color: "#7dd3fc",
       })
     } else {
-      setGraphNodes(graph, nodes)
+      setGraphNodes(graph, nodes, settings)
     }
 
     rendererRef.current.refresh()
-  }, [nodes])
+  }, [nodes, settings])
   
   useEffect(() => {
     const renderer = rendererRef.current
