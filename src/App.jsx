@@ -21,6 +21,9 @@ async function FetchMap(mapName, authToken) {
 
     const text = await response.text()
     const data = text ? JSON.parse(text) : {}
+
+    console.log(mapName + ' responded with ' + data?.notes.length + ' echoes')
+    
     return data?.notes ?? []
   } catch (error) {
     console.error(error)
