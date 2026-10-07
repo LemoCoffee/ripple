@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import GraphView from './GraphView.jsx'
 import Search from './Search.jsx'
@@ -39,12 +39,19 @@ function App() {
   const [activeMenu, setActiveMenu] = useState(null)
   const [showCredits, setShowCredits] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [settings, setSettings] = useState({ showExplicitEchoes: true })
+
+  const latestRequest = useRef(0)
 
   const loadMap = async (mapName) => {
     if (!mapName) { return }
 
+    const requestId = ++latestRequest.current
+    setLoading(true)
     const echoes = await FetchMap(mapName, authToken)
+    if (requestId !== latestRequest.current) { return }
+    setLoading(false)
     const filteredEchoes = settings.showExplicitEchoes
       ? echoes
       : echoes.filter((echo) => !echo?.explicit)
@@ -91,6 +98,20 @@ function App() {
         markRead={markRead}
         settings={settings}
       />
+      <div className={`loading-echo${loading ? ' visible' : ''}`} role="status" aria-label="Loading map" aria-hidden={!loading}>
+        <svg viewBox="-50 -50 100 100">
+          <polygon
+            className="loading-echo-shape"
+            points={Array.from({ length: 10 }, (_, i) => {
+              const a = ((90 + 36 * i) * Math.PI) / 180
+              return `${(48 * Math.cos(a)).toFixed(2)},${(-48 * Math.sin(a)).toFixed(2)}`
+            }).join(' ')}
+          />
+          {[-14, 0, 14].map((x, i) => (
+            <circle key={x} className="loading-echo-dot" cx={x} cy="0" r="5" style={{ animationDelay: `${i * 0.25}s` }} />
+          ))}
+        </svg>
+      </div>
       <div className="input-panel">
         <Search onSelect={(selectedMapName, options = {}) => {
           setMapInput(selectedMapName)
