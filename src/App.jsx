@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import GraphView from './GraphView.jsx'
 import Search from './Search.jsx'
@@ -42,7 +42,18 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [settings, setSettings] = useState({ showExplicitEchoes: false, showTimestamps: false})
+  const [settings, setSettings] = useState(() => {
+    const defaults = { showExplicitEchoes: false, showTimestamps: false }
+    try {
+      return { ...defaults, ...JSON.parse(localStorage.getItem('settings') || '{}') }
+    } catch {
+      return defaults
+    }
+  })
+
+  useEffect(() => {
+    localStorage.setItem('settings', JSON.stringify(settings))
+  }, [settings])
 
   const latestRequest = useRef(0)
 
@@ -59,12 +70,17 @@ function App() {
   }
 
   const [readNoteIds, setReadNoteIds] = useState(() => {
-    return JSON.parse(localStorage.getItem('readNoteIds') || '[]')
+    try {
+      return JSON.parse(localStorage.getItem('readNoteIds') || '[]').map(String)
+    } catch {
+      return []
+    }
   })
+  const readIds = useMemo(() => new Set(readNoteIds), [readNoteIds])
 
   const markRead = (noteId) => {
     setReadNoteIds((prev) => {
-      const next = [...new Set([...prev, noteId])]
+      const next = [...new Set([...prev, String(noteId)])]
       localStorage.setItem('readNoteIds', JSON.stringify(next))
       return next
     })
@@ -97,6 +113,7 @@ function App() {
       <GraphView
         nodes={mapEchoes}
         markRead={markRead}
+        readIds={readIds}
         settings={settings}
       />
       <div className={`loading-echo${loading ? ' visible' : ''}`} role="status" aria-label="Loading map" aria-hidden={!loading}>
