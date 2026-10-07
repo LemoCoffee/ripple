@@ -11,6 +11,7 @@ function setGraphNodes(graph, nodes, showExplicit) {
   nodes.forEach((node) => {
     const position = Array.isArray(node?.position) ? node.position : []
     node.offensive = isOffensive(node.comment)
+    
 
     graph.addNode(String(node.id), {
       label: node.comment || 'Echo',
@@ -19,8 +20,9 @@ function setGraphNodes(graph, nodes, showExplicit) {
       size: 2,
       color: getNodeColor(node),
       baseColor: getNodeColor(node),
-      explicit: Boolean(node.explicit || node.offensive),
-      hidden: Boolean(node.explicit || node.offensive) && !showExplicit
+      timestamp: node.created,
+      explicit: Boolean(node.offensive),
+      hidden: Boolean(node.offensive) && !showExplicit
     })
   })
 }
@@ -76,13 +78,13 @@ function createTooltip() {
   return el
 }
 
-function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } }) {
+function GraphView({ nodes, markRead, settings }) {
   const containerRef = useRef(null)
   const graphRef = useRef(null)
   const rendererRef = useRef(null)
   const markReadRef = useRef(markRead)
-  const showExplicitRef = useRef(settings?.showExplicitEchoes)
-  showExplicitRef.current = settings?.showExplicitEchoes
+  const settingsRef = useRef(settings)
+  settingsRef.current = settings
 
   // markRead is recreated every App render; keeping it in a ref lets the hover
   // effect run once, so re-renders can't cancel an in-flight fade or tooltip
@@ -129,11 +131,11 @@ function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } })
         label: "No echoes yet",
         x: 0,
         y: 0,
-        size: 1,
+        size: 0,
         color: "#7dd3fc",
       })
     } else {
-      setGraphNodes(graph, nodes, showExplicitRef.current)
+      setGraphNodes(graph, nodes, settingsRef.current?.showExplicitEchoes)
     }
 
     const renderer = rendererRef.current
