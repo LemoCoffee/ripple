@@ -42,7 +42,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [settings, setSettings] = useState({ showExplicitEchoes: true })
+  const [settings, setSettings] = useState({ showExplicitEchoes: false, showTimestamps: false})
 
   const latestRequest = useRef(0)
 
@@ -150,12 +150,23 @@ function App() {
 
       <Menu title="Settings" open={showSettings} onClose={closeMenu} mode="settings">
         <div className="menu-row">
-          <span>Show explicit echoes</span>
+          <span>Explicit echoes</span>
           <label className="toggle-row">
             <input
               type="checkbox"
               checked={settings.showExplicitEchoes}
               onChange={(event) => setSettings((prev) => ({ ...prev, showExplicitEchoes: event.target.checked }))}
+            />
+            <span className="toggle-slider" />
+          </label>
+        </div>
+        <div className="menu-row">
+          <span>Timestamps</span>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={settings.showTimestamps}
+              onChange={(event) => setSettings((prev) => ({ ...prev, showTimestamps: event.target.checked }))}
             />
             <span className="toggle-slider" />
           </label>
