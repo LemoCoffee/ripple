@@ -39,6 +39,26 @@ function getNodeColor(node) {
   return 'PaleTurquoise'
 }
 
+function formatTimestamp(timestamp) {
+  if (!timestamp) return null
+
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) return null
+
+  const day = date.getUTCDate()
+  const daySuffix = day % 100 >= 11 && day % 100 <= 13
+    ? 'th'
+    : ({ 1: 'st', 2: 'nd', 3: 'rd' }[day % 10] || 'th')
+  const month = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(date)
+  const hours = String(date.getUTCHours()).padStart(2, '0')
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+
+  return `${month} ${day}${daySuffix}, ${date.getUTCFullYear()} - ${hours}:${minutes}`
+}
+
 const WHITE = [255, 255, 255]
 const FADE_MS = 250
 const TOOLTIP_MAX_WIDTH = 220
@@ -69,6 +89,7 @@ function createTooltip() {
     color: '#fff',
     font: '14px system-ui, sans-serif',
     lineHeight: '1.3',
+    whiteSpace: 'pre-line',
     overflowWrap: 'anywhere',
     textShadow: '0 1px 4px rgba(0, 0, 0, 0.9)',
     pointerEvents: 'none',
@@ -84,13 +105,18 @@ function GraphView({ nodes, markRead, settings }) {
   const rendererRef = useRef(null)
   const markReadRef = useRef(markRead)
   const settingsRef = useRef(settings)
-  settingsRef.current = settings
+  const tooltipRef = useRef(null)
+  const hoveredRef = useRef(null)
 
   // markRead is recreated every App render; keeping it in a ref lets the hover
   // effect run once, so re-renders can't cancel an in-flight fade or tooltip
   useEffect(() => {
     markReadRef.current = markRead
   }, [markRead])
+
+  useEffect(() => {
+    settingsRef.current = settings
+  }, [settings])
 
   useEffect(() => {
     graphRef.current = new Graph()
@@ -165,6 +191,7 @@ function GraphView({ nodes, markRead, settings }) {
 
     const container = renderer.getContainer()
     const tooltip = createTooltip()
+    tooltipRef.current = tooltip
     container.appendChild(tooltip)
 
     let hovered = null
@@ -214,7 +241,8 @@ function GraphView({ nodes, markRead, settings }) {
     const handleEnterNode = ({ node }) => {
       graph.setNodeAttribute(node, 'enterHover', performance.now())
       hovered = node
-      tooltip.textContent = graph.getNodeAttribute(node, 'label')
+      hoveredRef.current = node
+      updateTooltipText(tooltip, graph, node, settingsRef.current?.showTimestamps)
       positionTooltip()
       tooltip.style.opacity = '1'
       fadeNodeTo(node, WHITE)
@@ -231,7 +259,10 @@ function GraphView({ nodes, markRead, settings }) {
       }
 
       // Tooltip keeps its last position/text while it fades out
-      if (hovered === node) tooltip.style.opacity = '0'
+      if (hovered === node) {
+        tooltip.style.opacity = '0'
+        hoveredRef.current = null
+      }
       const base = graph.getNodeAttribute(node, 'baseColor') || 'PaleTurquoise'
       fadeNodeTo(node, toRgb(base))
     }
@@ -246,10 +277,31 @@ function GraphView({ nodes, markRead, settings }) {
       renderer.off('afterRender', positionTooltip)
       if (frame !== null) cancelAnimationFrame(frame)
       tooltip.remove()
+      tooltipRef.current = null
+      hoveredRef.current = null
     }
   }, [])
 
+  useEffect(() => {
+    const showTimestamps = settings?.showTimestamps
+    const node = hoveredRef.current
+    const graph = graphRef.current
+    const tooltip = tooltipRef.current
+    if (!node || !graph?.hasNode(node) || !tooltip) return
+
+    updateTooltipText(tooltip, graph, node, showTimestamps)
+    rendererRef.current?.refresh()
+  }, [settings?.showTimestamps])
+
   return <div className="graph-layer" ref={containerRef} />
+}
+
+function updateTooltipText(tooltip, graph, node, showTimestamps) {
+  const label = graph.getNodeAttribute(node, 'label')
+  const timestamp = showTimestamps
+    ? formatTimestamp(graph.getNodeAttribute(node, 'timestamp'))
+    : null
+  tooltip.textContent = timestamp ? `${label}\n${timestamp}` : label
 }
 
 export default GraphView
