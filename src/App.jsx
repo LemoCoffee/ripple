@@ -54,10 +54,7 @@ function App() {
     const echoes = await FetchMap(mapName, authToken)
     if (requestId !== latestRequest.current) { return }
     setLoading(false)
-    const filteredEchoes = settings.showExplicitEchoes
-      ? echoes
-      : echoes.filter((echo) => !echo?.explicit)
-    setMapEchoes(filteredEchoes)
+    setMapEchoes(echoes)
     setSelectedMap(mapName)
   }
 
@@ -79,7 +76,7 @@ function App() {
     }, 1000)
 
     return () => window.clearTimeout(timer)
-  }, [mapInput, authToken, settings.showExplicitEchoes])
+  }, [mapInput, authToken])
 
   const openMenu = (menuName) => {
     setActiveMenu(menuName)

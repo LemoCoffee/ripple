@@ -3,7 +3,7 @@ import Graph from 'graphology'
 import Sigma from 'sigma'
 import { isOffensive } from './filter.js'
 
-function setGraphNodes(graph, nodes, settings) {
+function setGraphNodes(graph, nodes, showExplicit) {
   if (!graph || !Array.isArray(nodes)) {
     return
   }
@@ -19,7 +19,8 @@ function setGraphNodes(graph, nodes, settings) {
       size: 2,
       color: getNodeColor(node),
       baseColor: getNodeColor(node),
-      hidden: node.offensive && !settings?.showExplicitEchoes
+      explicit: Boolean(node.explicit || node.offensive),
+      hidden: Boolean(node.explicit || node.offensive) && !showExplicit
     })
   })
 }
@@ -80,6 +81,8 @@ function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } })
   const graphRef = useRef(null)
   const rendererRef = useRef(null)
   const markReadRef = useRef(markRead)
+  const showExplicitRef = useRef(settings?.showExplicitEchoes)
+  showExplicitRef.current = settings?.showExplicitEchoes
 
   // markRead is recreated every App render; keeping it in a ref lets the hover
   // effect run once, so re-renders can't cancel an in-flight fade or tooltip
@@ -130,7 +133,7 @@ function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } })
         color: "#7dd3fc",
       })
     } else {
-      setGraphNodes(graph, nodes, settings)
+      setGraphNodes(graph, nodes, showExplicitRef.current)
     }
 
     const renderer = rendererRef.current
@@ -138,7 +141,20 @@ function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } })
     renderer.refresh()
     renderer.getCamera().setState({ x: 0.5, y: 0.5, angle: 0, ratio: 1 })
     renderer.getCamera().animatedReset()
-  }, [nodes, settings])
+  }, [nodes])
+
+  // Toggling explicit echoes only hides/shows nodes; hidden nodes are neither rendered nor hoverable
+  useEffect(() => {
+    const graph = graphRef.current
+    const renderer = rendererRef.current
+    if (!graph || !renderer) return
+
+    graph.forEachNode((node, attributes) => {
+      if (attributes.explicit === undefined) return
+      graph.setNodeAttribute(node, 'hidden', attributes.explicit && !settings?.showExplicitEchoes)
+    })
+    renderer.refresh()
+  }, [settings?.showExplicitEchoes])
   
   useEffect(() => {
     const renderer = rendererRef.current
