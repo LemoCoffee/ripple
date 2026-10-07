@@ -462,3 +462,20 @@
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-7px); }
 }
+
+.floating-menu-button.about {
+  color: PaleTurquoise;
+  border-color: rgba(175, 238, 238, 0.4);
+}
+
+.floating-menu-button.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.menu-text {
+  margin: 0;
+  line-height: 1.5;
+}
