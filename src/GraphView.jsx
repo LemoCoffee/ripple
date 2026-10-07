@@ -3,7 +3,7 @@ import Graph from 'graphology'
 import Sigma from 'sigma'
 import { isOffensive } from './filter.js'
 
-function setGraphNodes(graph, nodes, showExplicit) {
+function setGraphNodes(graph, nodes, showExplicit, readIds) {
   if (!graph || !Array.isArray(nodes)) {
     return
   }
@@ -11,7 +11,7 @@ function setGraphNodes(graph, nodes, showExplicit) {
   nodes.forEach((node) => {
     const position = Array.isArray(node?.position) ? node.position : []
     node.offensive = isOffensive(node.comment)
-    
+    node.read = readIds?.has(String(node.id)) ?? false
 
     graph.addNode(String(node.id), {
       label: node.comment || 'Echo',
@@ -99,12 +99,13 @@ function createTooltip() {
   return el
 }
 
-function GraphView({ nodes, markRead, settings }) {
+function GraphView({ nodes, markRead, readIds, settings }) {
   const containerRef = useRef(null)
   const graphRef = useRef(null)
   const rendererRef = useRef(null)
   const markReadRef = useRef(markRead)
   const settingsRef = useRef(settings)
+  const readIdsRef = useRef(readIds)
   const tooltipRef = useRef(null)
   const hoveredRef = useRef(null)
 
@@ -117,6 +118,10 @@ function GraphView({ nodes, markRead, settings }) {
   useEffect(() => {
     settingsRef.current = settings
   }, [settings])
+
+  useEffect(() => {
+    readIdsRef.current = readIds
+  }, [readIds])
 
   useEffect(() => {
     graphRef.current = new Graph()
@@ -161,7 +166,7 @@ function GraphView({ nodes, markRead, settings }) {
         color: "#7dd3fc",
       })
     } else {
-      setGraphNodes(graph, nodes, settingsRef.current?.showExplicitEchoes)
+      setGraphNodes(graph, nodes, settingsRef.current?.showExplicitEchoes, readIdsRef.current)
     }
 
     const renderer = rendererRef.current
