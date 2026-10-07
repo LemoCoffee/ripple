@@ -51,5 +51,5 @@ Then open the local Vite URL shown in the terminal.
 
 ## License
 
-This project has no license specified.
+Copyright 2026 LemoCoffee. Licensed under the [Apache License, Version 2.0](LICENSE).
 
