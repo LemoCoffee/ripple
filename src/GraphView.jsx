@@ -21,8 +21,8 @@ function setGraphNodes(graph, nodes, showExplicit) {
       color: getNodeColor(node),
       baseColor: getNodeColor(node),
       timestamp: node.created,
-      explicit: Boolean(node.offensive),
-      hidden: Boolean(node.offensive) && !showExplicit
+      explicit: node.offensive,
+      hidden: node.offensive && !showExplicit
     })
   })
 }
