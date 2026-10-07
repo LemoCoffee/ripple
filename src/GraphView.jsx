@@ -61,6 +61,8 @@ function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } })
 
     return () => {
       rendererRef.current?.kill()
+      rendererRef.current = null
+      graphRef.current = null
     }
   }, [])
 
@@ -82,7 +84,11 @@ function GraphView({ nodes, markRead, settings = { showExplicitEchoes: true } })
       setGraphNodes(graph, nodes, settings)
     }
 
-    rendererRef.current.refresh()
+    const renderer = rendererRef.current
+    if (!renderer) return
+    renderer.refresh()
+    renderer.getCamera().setState({ x: 0.5, y: 0.5, angle: 0, ratio: 1 })
+    renderer.getCamera().animatedReset()
   }, [nodes, settings])
   
   useEffect(() => {
