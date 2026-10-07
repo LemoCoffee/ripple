@@ -33,7 +33,7 @@ async function FetchMap(mapName, authToken) {
 
 function App() {
   const [authToken, setAuthToken] = useState("")
-  const [selectedMap, setSelectedMap] = useState("ctf_applejack")
+  const [selectedMap, setSelectedMap] = useState("gm_construct")
   const [mapInput, setMapInput] = useState(selectedMap)
   const [mapEchoes, setMapEchoes] = useState([])
   const [activeMenu, setActiveMenu] = useState(null)
