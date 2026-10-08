@@ -96,6 +96,8 @@ function createTooltip() {
     boxSizing: 'content-box',
     background: 'radial-gradient(ellipse farthest-side at center, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.75) 65%, rgba(0, 0, 0, 0) 100%)',
     pointerEvents: 'none',
+    userSelect: 'text',
+    cursor: 'text',
     opacity: '0',
     transition: `opacity ${FADE_MS}ms ease`,
   })
@@ -203,16 +205,18 @@ function GraphView({ nodes, markRead, readIds, settings }) {
     container.appendChild(tooltip)
 
     let hovered = null
+    let pinned = null
     const anims = new Map()
     let frame = null
 
     const positionTooltip = () => {
-      if (!hovered || !graph.hasNode(hovered)) return
+      const shown = pinned ?? hovered
+      if (!shown || !graph.hasNode(shown)) return
       const { x, y } = renderer.graphToViewport({
-        x: graph.getNodeAttribute(hovered, 'x'),
-        y: graph.getNodeAttribute(hovered, 'y'),
+        x: graph.getNodeAttribute(shown, 'x'),
+        y: graph.getNodeAttribute(shown, 'y'),
       })
-      const size = graph.getNodeAttribute(hovered, 'size') || 2
+      const size = graph.getNodeAttribute(shown, 'size') || 2
       // Sigma's canvases may not share the container's origin, so offset from the canvas
       const canvasRect = renderer.getCanvases().mouse.getBoundingClientRect()
       const containerRect = container.getBoundingClientRect()
@@ -249,10 +253,12 @@ function GraphView({ nodes, markRead, readIds, settings }) {
     const handleEnterNode = ({ node }) => {
       graph.setNodeAttribute(node, 'enterHover', performance.now())
       hovered = node
-      hoveredRef.current = node
-      updateTooltipText(tooltip, graph, node, settingsRef.current?.showTimestamps)
-      positionTooltip()
-      tooltip.style.opacity = '1'
+      if (pinned === null) {
+        hoveredRef.current = node
+        updateTooltipText(tooltip, graph, node, settingsRef.current?.showTimestamps)
+        positionTooltip()
+        tooltip.style.opacity = '1'
+      }
       fadeNodeTo(node, WHITE)
     }
 
@@ -267,19 +273,59 @@ function GraphView({ nodes, markRead, readIds, settings }) {
       }
 
       // Tooltip keeps its last position/text while it fades out
-      if (hovered === node) {
+      if (hovered === node) hovered = null
+      if (pinned === null && hoveredRef.current === node) {
         tooltip.style.opacity = '0'
         hoveredRef.current = null
       }
+      if (pinned === node) return
       const base = graph.getNodeAttribute(node, 'baseColor') || 'PaleTurquoise'
       fadeNodeTo(node, toRgb(base))
     }
 
+    const unpin = () => {
+      if (pinned === null) return
+      const node = pinned
+      pinned = null
+      hoveredRef.current = hovered
+      tooltip.style.pointerEvents = 'none'
+      if (hovered !== null && graph.hasNode(hovered)) {
+        updateTooltipText(tooltip, graph, hovered, settingsRef.current?.showTimestamps)
+        positionTooltip()
+      } else {
+        tooltip.style.opacity = '0'
+      }
+      if (node !== hovered && graph.hasNode(node)) {
+        fadeNodeTo(node, toRgb(graph.getNodeAttribute(node, 'baseColor') || 'PaleTurquoise'))
+      }
+    }
+
+    const handleClickNode = ({ node }) => {
+      if (pinned === node) return
+      const previous = pinned
+      pinned = node
+      hoveredRef.current = node
+      updateTooltipText(tooltip, graph, node, settingsRef.current?.showTimestamps)
+      positionTooltip()
+      tooltip.style.opacity = '1'
+      tooltip.style.pointerEvents = 'auto'
+      window.getSelection()?.removeAllRanges()
+      if (previous !== null && previous !== hovered && graph.hasNode(previous)) {
+        fadeNodeTo(previous, toRgb(graph.getNodeAttribute(previous, 'baseColor') || 'PaleTurquoise'))
+      }
+      fadeNodeTo(node, WHITE)
+    }
+
+    // Clicks inside the tooltip never reach Sigma's mouse canvas, so selecting text keeps it open
+    renderer.on('clickNode', handleClickNode)
+    renderer.on('clickStage', unpin)
     renderer.on('enterNode', handleEnterNode)
     renderer.on('leaveNode', handleLeaveNode)
     renderer.on('afterRender', positionTooltip)
 
     return () => {
+      renderer.off('clickNode', handleClickNode)
+      renderer.off('clickStage', unpin)
       renderer.off('enterNode', handleEnterNode)
       renderer.off('leaveNode', handleLeaveNode)
       renderer.off('afterRender', positionTooltip)
