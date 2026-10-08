@@ -56,6 +56,7 @@ function App() {
   }, [settings])
 
   const latestRequest = useRef(0)
+  const immediateMapLoad = useRef(null)
 
   const loadMap = async (mapName) => {
     if (!mapName) { return }
@@ -87,6 +88,12 @@ function App() {
   }
 
   useEffect(() => {
+    if (immediateMapLoad.current === mapInput) {
+      immediateMapLoad.current = null
+      return
+    }
+    immediateMapLoad.current = null
+
     const timer = window.setTimeout(() => {
       loadMap(mapInput)
     }, 1000)
@@ -136,6 +143,7 @@ function App() {
           setSelectedMap(selectedMapName)
 
           if (options.immediate) {
+            immediateMapLoad.current = selectedMapName
             loadMap(selectedMapName)
           }
         }} />
