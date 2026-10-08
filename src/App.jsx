@@ -10,8 +10,6 @@ const REPO_URL = 'https://github.com/LemoCoffee/ripple'
 async function FetchMap(mapName, authToken) {
   const url = `${PROXY_BASE}/note/view?map=${encodeURIComponent(mapName)}`
 
-  console.log('Fetching map at : ' + url)
-
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -22,8 +20,6 @@ async function FetchMap(mapName, authToken) {
 
     const text = await response.text()
     const data = text ? JSON.parse(text) : {}
-
-    console.log(mapName + ' responded with ' + data?.notes.length + ' echoes')
     
     return data?.notes ?? []
   } catch (error) {
