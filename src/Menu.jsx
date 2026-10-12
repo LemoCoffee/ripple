@@ -1,10 +1,6 @@
-import { useMemo } from 'react'
-
 function Menu({ title, open, onClose, mode = 'settings', children }) {
-  const isMobile = useMemo(() => {
-    if (typeof window === 'undefined') return false
-    return window.matchMedia('(max-width: 768px)').matches
-  }, [open])
+  const isMobile = typeof window !== 'undefined'
+    && window.matchMedia('(max-width: 768px)').matches
 
   if (!open) return null
 

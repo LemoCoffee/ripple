@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import GraphView from './GraphView.jsx'
 import Search from './Search.jsx'
@@ -7,15 +7,12 @@ import Menu from './Menu.jsx'
 const PROXY_BASE = '/api'
 const REPO_URL = 'https://github.com/LemoCoffee/ripple'
 
-async function FetchMap(mapName, authToken) {
+async function FetchMap(mapName) {
   const url = `${PROXY_BASE}/note/view?map=${encodeURIComponent(mapName)}`
 
   try {
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        Authorization: authToken,
-      },
     })
 
     const text = await response.text()
@@ -29,11 +26,9 @@ async function FetchMap(mapName, authToken) {
 }
 
 function App() {
-  const [authToken, setAuthToken] = useState("")
   const [selectedMap, setSelectedMap] = useState("gm_construct")
   const [mapInput, setMapInput] = useState(selectedMap)
   const [mapEchoes, setMapEchoes] = useState([])
-  const [activeMenu, setActiveMenu] = useState(null)
   const [showCredits, setShowCredits] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
@@ -47,24 +42,24 @@ function App() {
     }
   })
 
+  const latestRequest = useRef(0)
+  const immediateMapLoad = useRef(null)
+
   useEffect(() => {
     localStorage.setItem('settings', JSON.stringify(settings))
   }, [settings])
 
-  const latestRequest = useRef(0)
-  const immediateMapLoad = useRef(null)
-
-  const loadMap = async (mapName) => {
+  const loadMap = useCallback(async (mapName) => {
     if (!mapName) { return }
 
     const requestId = ++latestRequest.current
     setLoading(true)
-    const echoes = await FetchMap(mapName, authToken)
+    const echoes = await FetchMap(mapName)
     if (requestId !== latestRequest.current) { return }
     setLoading(false)
     setMapEchoes(echoes)
     setSelectedMap(mapName)
-  }
+  }, [])
 
   const [readNoteIds, setReadNoteIds] = useState(() => {
     try {
@@ -95,17 +90,15 @@ function App() {
     }, 1000)
 
     return () => window.clearTimeout(timer)
-  }, [mapInput, authToken])
+  }, [mapInput, loadMap])
 
   const openMenu = (menuName) => {
-    setActiveMenu(menuName)
     if (menuName === 'settings') setShowSettings(true)
     if (menuName === 'credits') setShowCredits(true)
     if (menuName === 'about') setShowAbout(true)
   }
 
   const closeMenu = () => {
-    setActiveMenu(null)
     setShowSettings(false)
     setShowCredits(false)
     setShowAbout(false)
