@@ -34,7 +34,11 @@ function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [loading, setLoading] = useState(false)
   const [settings, setSettings] = useState(() => {
-    const defaults = { showExplicitEchoes: false, showTimestamps: false }
+    const defaults = {
+      showExplicitEchoes: false,
+      showTimestamps: false,
+      useCommunityColors: false,
+    }
     try {
       return { ...defaults, ...JSON.parse(localStorage.getItem('settings') || '{}') }
     } catch {
@@ -181,6 +185,17 @@ function App() {
               type="checkbox"
               checked={settings.showTimestamps}
               onChange={(event) => setSettings((prev) => ({ ...prev, showTimestamps: event.target.checked }))}
+            />
+            <span className="toggle-slider" />
+          </label>
+        </div>
+        <div className="menu-row">
+          <span>Community colors</span>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={settings.useCommunityColors}
+              onChange={(event) => setSettings((prev) => ({ ...prev, useCommunityColors: event.target.checked }))}
             />
             <span className="toggle-slider" />
           </label>

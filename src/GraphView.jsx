@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 import Graph from 'graphology'
 import Sigma from 'sigma'
 import { isOffensive } from './filter.js'
+import { getSignatureColor } from './SignatureColors.js'
 
-function setGraphNodes(graph, nodes, showExplicit, readIds) {
+function setGraphNodes(graph, nodes, settings, readIds) {
   if (!graph || !Array.isArray(nodes)) {
     return
   }
@@ -18,16 +19,16 @@ function setGraphNodes(graph, nodes, showExplicit, readIds) {
       x: position[0] ?? 0,
       y: position[1] ?? 0,
       size: 2,
-      color: getNodeColor(node),
-      baseColor: getNodeColor(node),
+      color: getNodeColor(node, settings),
+      baseColor: getNodeColor(node, settings),
       timestamp: node.created,
       explicit: node.offensive,
-      hidden: node.offensive && !showExplicit
+      hidden: node.offensive && !settings?.showExplicitEchoes
     })
   })
 }
 
-function getNodeColor(node) {
+function getNodeColor(node, settings) {
   if (node.read) {
     return 'gray'
   }
@@ -36,7 +37,9 @@ function getNodeColor(node) {
     return 'red'
   }
 
-  return 'PaleTurquoise'
+  return settings?.useCommunityColors
+    ? `rgb(${getSignatureColor(node.comment).join()})`
+    : 'PaleTurquoise'
 }
 
 function formatTimestamp(timestamp) {
@@ -178,7 +181,12 @@ function GraphView({ nodes, markRead, readIds, settings }) {
         color: "#7dd3fc",
       })
     } else {
-      setGraphNodes(graph, nodes, settingsRef.current?.showExplicitEchoes, readIdsRef.current)
+      setGraphNodes(
+        graph,
+        nodes,
+        settingsRef.current,
+        readIdsRef.current
+      )
     }
 
     const renderer = rendererRef.current
