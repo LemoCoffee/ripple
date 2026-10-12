@@ -263,7 +263,7 @@ function GraphView({ nodes, markRead, readIds, settings }) {
           anims.delete(node)
           return
         }
-        const p = Math.min(1, (now - anim.start) / FADE_MS)
+        const p = Math.max(0, Math.min(1, (now - anim.start) / FADE_MS))
         const rgb = anim.from.map((c, i) => Math.round(c + (anim.to[i] - c) * p))
         graph.setNodeAttribute(node, 'color', `rgb(${rgb.join(',')})`)
         if (p >= 1) anims.delete(node)
@@ -306,8 +306,8 @@ function GraphView({ nodes, markRead, readIds, settings }) {
         tooltip.style.opacity = '0'
         hoveredRef.current = null
       }
-      const base = graph.getNodeAttribute(node, 'baseColor') || 'PaleTurquoise'
-      fadeNodeTo(node, toRgb(base))
+      const baseColor = graph.getNodeAttribute(node, 'baseColor')
+      fadeNodeTo(node, toRgb(baseColor))
     }
 
     renderer.on('enterNode', handleEnterNode)
