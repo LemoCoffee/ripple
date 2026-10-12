@@ -35,6 +35,7 @@ const colors = {
 	"m.d.": [242, 242, 162],
 	g3: [255, 95, 0],
 	goldbrick: [255, 255, 125],
+	lc: [253, 203, 88],
 };
 
 function get_signature(message) {
