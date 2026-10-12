@@ -196,6 +196,24 @@ function GraphView({ nodes, markRead, readIds, settings }) {
     renderer.getCamera().animatedReset()
   }, [nodes])
 
+  useEffect(() => {
+    const graph = graphRef.current
+    const renderer = rendererRef.current
+    if (!graph || !renderer) return
+
+    graph.forEachNode((node, attributes) => {
+      if (attributes.explicit === undefined) return
+      const color = getNodeColor({
+        comment: attributes.label,
+        offensive: attributes.explicit,
+        read: attributes.read,
+      }, settings)
+      graph.setNodeAttribute(node, 'color', color)
+      graph.setNodeAttribute(node, 'baseColor', color)
+    })
+    renderer.refresh()
+  }, [settings])
+
   // Toggling explicit echoes only hides/shows nodes; hidden nodes are neither rendered nor hoverable
   useEffect(() => {
     const graph = graphRef.current
